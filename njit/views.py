@@ -74,6 +74,9 @@ class RegistrationView(View):
             )
         except IntegrityError as e:
             logging.error("Database Integrity Error", exc_info=True)
+
+            # todo: helpful error messages
+
             return HttpResponse(f"There was an error with your request. \n\n DETAILS:\n{e})")
 
         instructor = Staff.objects.get(staff_ssn=section.instructor_ssn.staff_ssn)
