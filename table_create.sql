@@ -169,6 +169,10 @@ CREATE TABLE registrations
   FOREIGN KEY (student_id) REFERENCES student(student_id),
   FOREIGN KEY (course_code, sec_no) REFERENCES section(course_code, sec_no)
 );
+ALTER TABLE registrations ADD
+(
+  PRIMARY KEY (course_code, student_id)
+);
 
 CREATE TABLE section_in_room
 (
