@@ -1,3 +1,5 @@
+import logging
+
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views import View
@@ -71,6 +73,7 @@ class RegistrationView(View):
                 course_code=course
             )
         except IntegrityError as e:
+            logging.error("Database Integrity Error", exc_info=True)
             return HttpResponse(f"There was an error with your request. \n\n DETAILS:\n{e})")
 
         instructor = Staff.objects.get(staff_ssn=section.instructor_ssn.staff_ssn)

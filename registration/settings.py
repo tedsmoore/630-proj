@@ -22,7 +22,7 @@ SECRET_KEY = env.get("DJANGO_SECRET_KEY", 'django-insecure-$x-azmk%#02n)z+k7tasm
 DEBUG = env.get('DEBUG', False)
 
 
-ALLOWED_HOSTS = ['definitive.quizitive.com']
+ALLOWED_HOSTS = ['definitive.quizitive.com', '127.0.0.1']
 
 
 # Application definition
