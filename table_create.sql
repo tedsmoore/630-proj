@@ -286,6 +286,8 @@ VALUES
     (1004, 1, 'CS123');
 
 
+-- >----- TRIGGERS ------<
+
 -- ------------------------
 -- Make sure courses don't over-enroll
 -- ------------------------
@@ -299,9 +301,6 @@ BEGIN
      THEN SET NEW.sec_no = NULL;
      END IF;
 END//
-
-
--- >----- TRIGGERS ------< --
 
 -- ------------------------
 -- Make sure courses don't overlap for a given student
