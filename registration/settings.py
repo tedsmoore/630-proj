@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-$x-azmk%#02n)z+k7tasmz!dr6+-5#z3(je&7269$5o%40%1gz
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['definitive.quizitive.com']
 
 
 # Application definition
