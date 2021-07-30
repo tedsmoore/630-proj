@@ -189,77 +189,6 @@ ALTER TABLE section_in_room ADD
 );
 
 -- ------------------------
--- Make sure courses don't over-enroll
--- ------------------------
-DELIMITER //
-CREATE TRIGGER check_max_enroll
-BEFORE INSERT ON registrations
-FOR EACH ROW
-BEGIN
-     IF (SELECT COUNT(*) FROM registrations r WHERE r.sec_no = NEW.sec_no) >=
-        (SELECT s.max_enroll from section s WHERE s.sec_no = NEW.sec_no)
-     THEN SET NEW.sec_no = NULL;
-     END IF;
-END//
-
--- ------------------------
--- Make sure courses don't overlap for a given student
--- ------------------------
-CREATE TRIGGER check_schedule
-BEFORE INSERT ON registrations
-FOR EACH ROW
-BEGIN
-     IF (
-         SELECT COUNT(*)
-         FROM  section s, section_in_room sr
-         WHERE NEW.sec_no = s.sec_no
-         AND NEW.course_code = s.course_code
-         AND s.sec_no = sr.sec_no
-         AND NOT EXISTS (
-            SELECT sr1.weekday
-            FROM registrations r1, section s1, section_in_room sr1
-            WHERE r1.sec_no = s1.sec_no
-            AND r1.course_code = s1.course_code
-            AND s1.sec_no = sr1.sec_no
-            AND r1.course_code = s1.course_code
-            AND r1.student_id = NEW.student_id
-            AND sr.weekday = sr1.weekday
-            AND sr.time = sr1.time
-         ) > 0
-     )
-     THEN SET NEW.sec_no = NULL;
-     END IF;
-END//
-
--- ------------------------
--- Make sure TAs don't have too many hours
--- ------------------------
-DELIMITER //
-CREATE TRIGGER check_hours
-BEFORE INSERT ON assignment
-FOR EACH ROW
-BEGIN
-    IF
-        ((
-         SELECT c.ta_hrs_req
-         FROM course c
-         WHERE c.course_code = NEW.course_code
-        ) + (
-         SELECT SUM(c.ta_hrs_req)
-         FROM  assignment a, course c
-         WHERE a.course_code = c.course_code
-         AND a.staff_ssn = NEW.staff_ssn
-        )) > (
-         SELECT s.work_hr
-         FROM staff s
-         WHERE s.staff_ssn = NEW.staff_ssn
-        )
-     THEN SET NEW.staff_ssn = NULL;
-     END IF;
-END//
-DELIMITER ;
-
--- ------------------------
 -- Populate staff table
 -- ------------------------
 INSERT INTO staff(staff_ssn, staff_name, staff_add, staff_salary)
@@ -351,3 +280,78 @@ VALUES
     (1002, 1, 'CS123'),
     (1003, 1, 'CS123'),
     (1004, 1, 'CS123');
+
+
+-- ------------------------
+-- Make sure courses don't over-enroll
+-- ------------------------
+DELIMITER //
+CREATE TRIGGER check_max_enroll
+BEFORE INSERT ON registrations
+FOR EACH ROW
+BEGIN
+     IF (SELECT COUNT(*) FROM registrations r WHERE r.sec_no = NEW.sec_no) >=
+        (SELECT s.max_enroll from section s WHERE s.sec_no = NEW.sec_no)
+     THEN SET NEW.sec_no = NULL;
+     END IF;
+END//
+
+
+-- >----- TRIGGERS ------< --
+
+-- ------------------------
+-- Make sure courses don't overlap for a given student
+-- ------------------------
+CREATE TRIGGER check_schedule
+BEFORE INSERT ON registrations
+FOR EACH ROW
+BEGIN
+     IF (
+         SELECT COUNT(*)
+         FROM  section s, section_in_room sr
+         WHERE NEW.sec_no = s.sec_no
+         AND NEW.course_code = s.course_code
+         AND s.sec_no = sr.sec_no
+         AND NOT EXISTS (
+            SELECT sr1.weekday
+            FROM registrations r1, section s1, section_in_room sr1
+            WHERE r1.sec_no = s1.sec_no
+            AND r1.course_code = s1.course_code
+            AND s1.sec_no = sr1.sec_no
+            AND r1.course_code = s1.course_code
+            AND r1.student_id = NEW.student_id
+            AND sr.weekday = sr1.weekday
+            AND sr.time = sr1.time
+         ) > 0
+     )
+     THEN SET NEW.sec_no = NULL;
+     END IF;
+END//
+
+-- ------------------------
+-- Make sure TAs don't have too many hours
+-- ------------------------
+DELIMITER //
+CREATE TRIGGER check_hours
+BEFORE INSERT ON assignment
+FOR EACH ROW
+BEGIN
+    IF
+        ((
+         SELECT c.ta_hrs_req
+         FROM course c
+         WHERE c.course_code = NEW.course_code
+        ) + (
+         SELECT SUM(c.ta_hrs_req)
+         FROM  assignment a, course c
+         WHERE a.course_code = c.course_code
+         AND a.staff_ssn = NEW.staff_ssn
+        )) > (
+         SELECT s.work_hr
+         FROM staff s
+         WHERE s.staff_ssn = NEW.staff_ssn
+        )
+     THEN SET NEW.staff_ssn = NULL;
+     END IF;
+END//
+DELIMITER ;
