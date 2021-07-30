@@ -9,21 +9,18 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+env = os.environ
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
+SECRET_KEY = env.get("DJANGO_SECRET_KEY", 'django-insecure-$x-azmk%#02n)z+k7tasmz!dr6+-5#z3(je&7269$5o%40%1gz')
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-$x-azmk%#02n)z+k7tasmz!dr6+-5#z3(je&7269$5o%40%1gz'
+DEBUG = env.get('DEBUG', False)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = ['definitive.quizitive.com']
 
