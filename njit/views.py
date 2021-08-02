@@ -124,7 +124,7 @@ class SectionListView(RegistrationView):
             'section': section,
             'course': course,
             'instructor': section.instructor_ssn,
-            'students': section.students.values(
+            'students': section.students.filter(course_code=course.course_code).values(
                 'student_id', 'student__student_name', 'student__major', 'student__student_year').order_by(
                 'student__student_name')
         }
