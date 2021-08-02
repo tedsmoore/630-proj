@@ -92,7 +92,7 @@ class Section(models.Model):
     def times(self):
         srs = [
             f"{sr.weekday} {sr.time} in {sr.build.build_name} room {sr.room_no_id}"
-            for sr in self.section_rooms.all()
+            for sr in self.section_rooms.filter(course_code=self.course_code)
         ]
         return ", ".join(srs)
 
