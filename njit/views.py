@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.views import View
 from django.db import IntegrityError
 
-from njit.models import Student, Department, Course, Section, Staff, Registrations
+from njit.models import Student, Department, Course, Section, Staff, Registrations, SectionInRoom
 from njit.forms import StudentIDForm, DepartmentForm, CourseForm, SectionForm
 
 
@@ -75,8 +75,30 @@ class RegistrationView(View):
         except IntegrityError as e:
             logging.error("Database Integrity Error", exc_info=True)
 
-            # todo: helpful error messages
+            # Registering for same course
+            if Registrations.objects.filter(student_id=student_id, course_code=course).exists():
+                msg = f"You have already registered for course {course.course_code} {course.course_name}"
+                return HttpResponse(f"There was an error with your request. {msg}")
 
+            # Max enroll reached
+            current_enroll = Registrations.objects.filter(sec_no=section).count()
+            if current_enroll >= section.max_enroll:
+                msg = f"This section has reached its maximum enrollment of {section.max_enroll}"
+                return HttpResponse(f"There was an error with your request. {msg}")
+
+            # Courses overlap
+            desired_course_times = SectionInRoom.objects.filter(
+                course_code=course, sec_no=section).values_list('weekday', 'time')
+            current_courses = Registrations.objects.filter(student_id=student_id)
+            course_codes = current_courses.values_list('course_code', flat=True)
+            sec_nos = current_courses.values_list('sec_no', flat=True)
+            current_course_times = SectionInRoom.objects.filter(
+                course_code__in=course_codes, sec_no__in=sec_nos).values_list('weekday', 'time')
+            if overlaps := set(desired_course_times).intersection(set(current_course_times)):
+                msg = "\n".join([f"You have a schedule conflict on {o[0]} at {o[1]}." for o in overlaps])
+                return HttpResponse(msg)
+
+            # Other errors
             return HttpResponse(f"There was an error with your request. \n\n DETAILS:\n{e})")
 
         instructor = Staff.objects.get(staff_ssn=section.instructor_ssn.staff_ssn)
