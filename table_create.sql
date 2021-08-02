@@ -210,7 +210,7 @@ INSERT INTO building(build_id, build_name, location)
 VALUES
        (001, 'Hazard Hall', 'East Wing'),
        (002, 'Diagon Alley', 'West Wing'),
-       (003, 'Diagon Alley', 'West Wing');
+       (003, 'The Oval Office', 'West Wing');
 
 -- ------------------------
 -- Populate room table
@@ -251,6 +251,7 @@ VALUES
 INSERT INTO course(course_code, course_name, credit, ta_hrs_req, dept_code)
 VALUES
     ('CS123', 'Computer Studies', 3, 6, 'CS'),
+    ('CS321', 'Database Management', 3, 6, 'CS'),
     ('BS101', 'Business Studies', 3, 4, 'BZA'),
     ('EG200', 'Writing', 3, 6, 'ENG'),
     ('HH400', 'History', 3, 8, 'HIS');
@@ -263,7 +264,9 @@ INSERT INTO section(sec_no, course_code, max_enroll, instructor_ssn)
 VALUES
     (001, 'CS123', 3, 450230098),
     (002, 'CS123', 30, 450230098),
-    (003, 'CS123', 30, 450230098);
+    (003, 'CS123', 30, 450230098),
+    (001, 'CS321', 30, 121980787),
+    (002, 'CS321', 30, 121980787);
 
 -- ------------------------
 -- Populate section_in_room table
@@ -274,7 +277,11 @@ VALUES
     (001, 1001, 'CS123', 001, 'WE', '1020'),
     (001, 1001, 'CS123', 002, 'TU', '1020'),
     (001, 1001, 'CS123', 002, 'TH', '1020'),
-    (001, 1001, 'CS123', 003, 'W', '1800');
+    (001, 1001, 'CS123', 003, 'W', '1800'),
+    (001, 2001, 'CS321', 001, 'MO', '1020'),
+    (001, 2001, 'CS321', 001, 'WE', '1020'),
+    (001, 2001, 'CS321', 002, 'TU', '1020'),
+    (001, 2001, 'CS321', 002, 'TH', '1020');
 
 -- ------------------------
 -- Populate registrations table
@@ -296,15 +303,17 @@ CREATE TRIGGER check_max_enroll
 BEFORE INSERT ON registrations
 FOR EACH ROW
 BEGIN
-     IF (SELECT COUNT(*) FROM registrations r WHERE r.sec_no = NEW.sec_no) >=
-        (SELECT s.max_enroll from section s WHERE s.sec_no = NEW.sec_no)
+     IF (SELECT COUNT(*) FROM registrations r WHERE r.sec_no = NEW.sec_no AND r.course_code = NEW.course_code) >=
+        (SELECT s.max_enroll from section s WHERE s.sec_no = NEW.sec_no AND s.course_code = NEW.course_code)
      THEN SET NEW.sec_no = NULL;
      END IF;
 END//
+DELIMITER ;
 
 -- ------------------------
 -- Make sure courses don't overlap for a given student
 -- ------------------------
+DELIMITER //
 CREATE TRIGGER check_schedule
 BEFORE INSERT ON registrations
 FOR EACH ROW
@@ -315,13 +324,14 @@ BEGIN
          WHERE NEW.sec_no = s.sec_no
          AND NEW.course_code = s.course_code
          AND s.sec_no = sr.sec_no
-         AND NOT EXISTS (
+         AND s.course_code = sr.course_code
+         AND EXISTS (
             SELECT sr1.weekday
             FROM registrations r1, section s1, section_in_room sr1
             WHERE r1.sec_no = s1.sec_no
             AND r1.course_code = s1.course_code
             AND s1.sec_no = sr1.sec_no
-            AND r1.course_code = s1.course_code
+            AND s1.course_code = sr1.course_code
             AND r1.student_id = NEW.student_id
             AND sr.weekday = sr1.weekday
             AND sr.time = sr1.time
@@ -330,6 +340,7 @@ BEGIN
      THEN SET NEW.sec_no = NULL;
      END IF;
 END//
+DELIMITER ;
 
 -- ------------------------
 -- Make sure TAs don't have too many hours
